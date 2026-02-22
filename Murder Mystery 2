@@ -15,7 +15,7 @@ local lastShotTime = 0
 local fireRate = 0.5 
 
 ---------------------------------------------------------
--- 1. HIGHLIGHT EM ASSASINOS, XERIFES E INOCENTES
+-- 1. FUNÇÃO ADMIN PANEL (B) - VERDE PARA INOCENTES
 ---------------------------------------------------------
 local function toggleAdminRoles()
     adminEnabled = not adminEnabled
@@ -119,4 +119,17 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     -- X-RAY LIGAR (K)
     elseif input.KeyCode == Enum.KeyCode.K then
         for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA
+            if obj:IsA("BasePart") and not obj:IsDescendantOf(player.Character) then
+                if not xrayOriginals[obj] then xrayOriginals[obj] = obj.Transparency end
+                obj.Transparency = 0.5
+            end
+        end
+
+    -- X-RAY DESLIGAR (J)
+    elseif input.KeyCode == Enum.KeyCode.J then
+        for obj, originalValue in pairs(xrayOriginals) do
+            if obj and obj.Parent then obj.Transparency = originalValue end
+        end
+        xrayOriginals = {} 
+    end
+end)
