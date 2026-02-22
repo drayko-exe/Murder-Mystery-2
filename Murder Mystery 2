@@ -8,8 +8,9 @@ local Camera = Workspace.CurrentCamera
 
 -- Variáveis de Controlo
 local xrayOriginals = {} 
+local xrayEnabled = false -- Controlo para o X-Ray (K)
 local aimbotEnabled = true
-local adminEnabled = false 
+local adminEnabled = false -- Controlo para o Painel (B)
 local aimbotRange = 100 
 local lastShotTime = 0
 local fireRate = 0.5 
@@ -25,9 +26,7 @@ local function toggleAdminRoles()
             local char = plr.Character
             
             if adminEnabled then
-                -- CORES: Vermelho (Assassino), Azul (Xerife), Verde (Inocente)
-                local color = Color3.fromRGB(0, 255, 0) -- Verde Puro (Inocente)
-                
+                local color = Color3.fromRGB(0, 255, 0) -- Verde (Inocente)
                 local hasKnife = char:FindFirstChild("Knife") or plr.Backpack:FindFirstChild("Knife")
                 local hasGun = char:FindFirstChild("Gun") or plr.Backpack:FindFirstChild("Gun") or char:FindFirstChild("Revolver") or plr.Backpack:FindFirstChild("Revolver")
 
@@ -46,7 +45,6 @@ local function toggleAdminRoles()
                 highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                 highlight.Parent = char
             else
-                -- DESATIVAR: Limpa o visual
                 local highlight = char:FindFirstChild("AdminHighlight")
                 if highlight then highlight:Destroy() end
             end
@@ -55,7 +53,34 @@ local function toggleAdminRoles()
 end
 
 ---------------------------------------------------------
--- 2. INFINITE JUMP
+-- 2. FUNÇÃO X-RAY (K) - ATIVA E DESATIVA NA MESMA TECLA
+---------------------------------------------------------
+local function toggleXray()
+    xrayEnabled = not xrayEnabled
+    
+    if xrayEnabled then
+        -- ATIVAR X-RAY
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and not obj:IsDescendantOf(player.Character) then
+                if not xrayOriginals[obj] then 
+                    xrayOriginals[obj] = obj.Transparency 
+                end
+                obj.Transparency = 0.5
+            end
+        end
+    else
+        -- DESATIVAR X-RAY
+        for obj, originalValue in pairs(xrayOriginals) do
+            if obj and obj.Parent then 
+                obj.Transparency = originalValue 
+            end
+        end
+        xrayOriginals = {} 
+    end
+end
+
+---------------------------------------------------------
+-- 3. INFINITE JUMP
 ---------------------------------------------------------
 UserInputService.JumpRequest:Connect(function()
     local character = player.Character
@@ -66,7 +91,7 @@ UserInputService.JumpRequest:Connect(function()
 end)
 
 ---------------------------------------------------------
--- 3. AIMBOT (U)
+-- 4. AIMBOT (U)
 ---------------------------------------------------------
 RunService.RenderStepped:Connect(function()
     if not aimbotEnabled then return end
@@ -96,12 +121,12 @@ RunService.RenderStepped:Connect(function()
 end)
 
 ---------------------------------------------------------
--- 4. TECLAS DE ATALHO (B, Y, U, K, J)
+-- 5. TECLAS DE ATALHO (B, Y, U, K)
 ---------------------------------------------------------
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     
-    -- ADMIN ROLES (B) - Ativa/Desativa
+    -- ADMIN ROLES (B)
     if input.KeyCode == Enum.KeyCode.B then
         toggleAdminRoles()
 
@@ -116,20 +141,8 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     elseif input.KeyCode == Enum.KeyCode.U then
         aimbotEnabled = not aimbotEnabled
 
-    -- X-RAY LIGAR (K)
+    -- X-RAY TOGGLE (K) - AGORA ATIVA E DESATIVA
     elseif input.KeyCode == Enum.KeyCode.K then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and not obj:IsDescendantOf(player.Character) then
-                if not xrayOriginals[obj] then xrayOriginals[obj] = obj.Transparency end
-                obj.Transparency = 0.5
-            end
-        end
-
-    -- X-RAY DESLIGAR (J)
-    elseif input.KeyCode == Enum.KeyCode.J then
-        for obj, originalValue in pairs(xrayOriginals) do
-            if obj and obj.Parent then obj.Transparency = originalValue end
-        end
-        xrayOriginals = {} 
+        toggleXray()
     end
 end)
