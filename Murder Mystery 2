@@ -1,28 +1,90 @@
--- ... (User's existing code) ...
-
--- Aimbot Variables
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local Camera = workspace.CurrentCamera
-local aimbotEnabled = true
-local aimbotRange = 100 -- O raio do "círculo" onde o aimbot atira
-local lastShotTime = 0
-local fireRate = 0.5 -- Tempo entre tiros
+local Workspace = game:GetService("Workspace")
 
+local player = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+-- Variáveis de Controlo
+local xrayOriginals = {} 
+local aimbotEnabled = true
+local adminEnabled = false 
+local aimbotRange = 100 
+local lastShotTime = 0
+local fireRate = 0.5 
+
+---------------------------------------------------------
+-- 1. FUNÇÃO ADMIN PANEL (B) - VERDE PARA INOCENTES
+---------------------------------------------------------
+local function toggleAdminRoles()
+    adminEnabled = not adminEnabled
+    
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            local char = plr.Character
+            
+            if adminEnabled then
+                -- CORES: Vermelho (Assassino), Azul (Xerife), Verde (Inocente)
+                local color = Color3.fromRGB(0, 255, 0) -- Verde Puro (Inocente)
+                
+                local hasKnife = char:FindFirstChild("Knife") or plr.Backpack:FindFirstChild("Knife")
+                local hasGun = char:FindFirstChild("Gun") or plr.Backpack:FindFirstChild("Gun") or char:FindFirstChild("Revolver") or plr.Backpack:FindFirstChild("Revolver")
+
+                if hasKnife then
+                    color = Color3.fromRGB(255, 0, 0) -- Vermelho
+                elseif hasGun then
+                    color = Color3.fromRGB(0, 0, 255) -- Azul
+                end
+
+                local highlight = char:FindFirstChild("AdminHighlight") or Instance.new("Highlight")
+                highlight.Name = "AdminHighlight"
+                highlight.FillColor = color
+                highlight.FillTransparency = 0.5
+                highlight.OutlineColor = color
+                highlight.OutlineTransparency = 0
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                highlight.Parent = char
+            else
+                -- DESATIVAR: Limpa o visual
+                local highlight = char:FindFirstChild("AdminHighlight")
+                if highlight then highlight:Destroy() end
+            end
+        end
+    end
+end
+
+---------------------------------------------------------
+-- 2. INFINITE JUMP
+---------------------------------------------------------
+UserInputService.JumpRequest:Connect(function()
+    local character = player.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+---------------------------------------------------------
+-- 3. AIMBOT (U)
+---------------------------------------------------------
 RunService.RenderStepped:Connect(function()
     if not aimbotEnabled then return end
-
     local currentTime = tick()
     if currentTime - lastShotTime < fireRate then return end
-
+    
     local nearestTarget = nil
     local minDistance = aimbotRange
+    local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 
-    for _, plr in pairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local distance = (player.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude
-            if distance < minDistance then
-                minDistance = distance
-                nearestTarget = plr.Character.HumanoidRootPart
+    if myRoot then
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local distance = (myRoot.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+                if distance < minDistance then
+                    minDistance = distance
+                    nearestTarget = plr.Character.HumanoidRootPart
+                end
             end
         end
     end
@@ -33,74 +95,28 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Toggle Aimbot with Key U
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.U then
-        aimbotEnabled = not aimbotEnabled
-local UserInputService = game:GetService("UserInputService")
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
-local xrayOriginals = {}
-
-local silentAimEnabled = false -- Estado do Silent Aim
-
 ---------------------------------------------------------
--- FUNÇÃO 1: INFINITE JUMP
----------------------------------------------------------
-UserInputService.JumpRequest:Connect(function()
-    local character = player.Character
-    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-
-    if humanoid then
-        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-    end
-end)
-
----------------------------------------------------------
--- FUNÇÃO 2: TELEPORTE E PARAR ANIMAÇÃO (TECLA Y)
+-- 4. TECLAS DE ATALHO (B, Y, U, K, J)
 ---------------------------------------------------------
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
+    
+    -- ADMIN ROLES (B) - Ativa/Desativa
+    if input.KeyCode == Enum.KeyCode.B then
+        toggleAdminRoles()
 
-    -- Teleporte e parar animação (Y)
-    if input.KeyCode == Enum.KeyCode.Y then
-        local character = player.Character
-        if not character then return end
-
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-        local root = character:FindFirstChild("HumanoidRootPart")
-
-        if humanoid and root then
-            for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
-                track:Stop()
-            end
-
-            local distancia = 7
-            root.CFrame = root.CFrame * CFrame.new(0, 0, distancia)
+    -- TELEPORTE TRÁS (Y)
+    elseif input.KeyCode == Enum.KeyCode.Y then
+        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = root.CFrame * CFrame.new(0, 0, 7)
         end
 
-    ---------------------------------------------------------
-    -- FUNÇÃO 3: X-RAY (K ATIVA, J DESATIVA)
-    ---------------------------------------------------------
-    elseif
--- ... existing code ...
+    -- AIMBOT TOGGLE (U)
+    elseif input.KeyCode == Enum.KeyCode.U then
+        aimbotEnabled = not aimbotEnabled
 
-local silentAimEnabled = false
-
--- Keybind for Silent Aim (U)
-if input.KeyCode == Enum.KeyCode.U then
-    silentAimEnabled = not silentAimEnabled
-    print("Silent Aim: " .. tostring(silentAimEnabled))
-end
-end)
-
--- RenderStepped Loop
-game:GetService("RunService").RenderStepped:Connect(function()
-    if silentAimEnabled then
-        -- Logic to find closest player and set Camera.CFrame
-        -- ...
-    end
-end)
+    -- X-RAY LIGAR (K)
+    elseif input.KeyCode == Enum.KeyCode.K then
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj:IsA
