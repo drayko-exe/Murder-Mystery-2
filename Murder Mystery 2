@@ -1,51 +1,28 @@
-local UserInputService = game:GetService("UserInputService")
-local Players = game:GetService("Players")
+-- ... (User's existing code) ...
+
+-- Aimbot Variables
 local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-
-local player = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
-
--- Variáveis de Controle
-local xrayOriginals = {} 
+local Camera = workspace.CurrentCamera
 local aimbotEnabled = true
-local aimbotRange = 100 
+local aimbotRange = 100 -- O raio do "círculo" onde o aimbot atira
 local lastShotTime = 0
-local fireRate = 0.5 
+local fireRate = 0.5 -- Tempo entre tiros
 
----------------------------------------------------------
--- 1. INFINITE JUMP (PULO INFINITO)
----------------------------------------------------------
-UserInputService.JumpRequest:Connect(function()
-    local character = player.Character
-    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-    end
-end)
-
----------------------------------------------------------
--- 2. AIMBOT (TRAVA DE MIRA) - TECLA U
----------------------------------------------------------
 RunService.RenderStepped:Connect(function()
     if not aimbotEnabled then return end
-    
+
     local currentTime = tick()
     if currentTime - lastShotTime < fireRate then return end
-    
+
     local nearestTarget = nil
     local minDistance = aimbotRange
 
     for _, plr in pairs(Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            -- Verifica se o jogador local tem um RootPart antes de calcular a distância
-            local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-            if myRoot then
-                local distance = (myRoot.Position - plr.Character.HumanoidRootPart.Position).Magnitude
-                if distance < minDistance then
-                    minDistance = distance
-                    nearestTarget = plr.Character.HumanoidRootPart
-                end
+            local distance = (player.Character.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+            if distance < minDistance then
+                minDistance = distance
+                nearestTarget = plr.Character.HumanoidRootPart
             end
         end
     end
@@ -56,48 +33,74 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- Toggle Aimbot with Key U
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.U then
+        aimbotEnabled = not aimbotEnabled
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local xrayOriginals = {}
+
+local silentAimEnabled = false -- Estado do Silent Aim
+
 ---------------------------------------------------------
--- 3. INPUTS (Y, U, K, J)
+-- FUNÇÃO 1: INFINITE JUMP
+---------------------------------------------------------
+UserInputService.JumpRequest:Connect(function()
+    local character = player.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+    if humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+---------------------------------------------------------
+-- FUNÇÃO 2: TELEPORTE E PARAR ANIMAÇÃO (TECLA Y)
 ---------------------------------------------------------
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
-    
-    -- TELEPORTE E PARAR ANIMAÇÃO (Y)
+
+    -- Teleporte e parar animação (Y)
     if input.KeyCode == Enum.KeyCode.Y then
         local character = player.Character
-        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-        local root = character and character:FindFirstChild("HumanoidRootPart")
-        
+        if not character then return end
+
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        local root = character:FindFirstChild("HumanoidRootPart")
+
         if humanoid and root then
             for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
                 track:Stop()
             end
-            root.CFrame = root.CFrame * CFrame.new(0, 0, 7) -- 7 studs para trás
+
+            local distancia = 7
+            root.CFrame = root.CFrame * CFrame.new(0, 0, distancia)
         end
 
-    -- TOGGLE AIMBOT (U)
-    elseif input.KeyCode == Enum.KeyCode.U then
-        aimbotEnabled = not aimbotEnabled
-        print("Aimbot:", aimbotEnabled)
+    ---------------------------------------------------------
+    -- FUNÇÃO 3: X-RAY (K ATIVA, J DESATIVA)
+    ---------------------------------------------------------
+    elseif
+-- ... existing code ...
 
-    -- ATIVAR X-RAY (K)
-    elseif input.KeyCode == Enum.KeyCode.K then
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and not obj:IsDescendantOf(player.Character) then
-                if not xrayOriginals[obj] then
-                    xrayOriginals[obj] = obj.Transparency
-                end
-                obj.Transparency = 0.5
-            end
-        end
+local silentAimEnabled = false
 
-    -- DESATIVAR X-RAY (J)
-    elseif input.KeyCode == Enum.KeyCode.J then
-        for obj, originalValue in pairs(xrayOriginals) do
-            if obj and obj.Parent then
-                obj.Transparency = originalValue
-            end
-        end
-        xrayOriginals = {} 
+-- Keybind for Silent Aim (U)
+if input.KeyCode == Enum.KeyCode.U then
+    silentAimEnabled = not silentAimEnabled
+    print("Silent Aim: " .. tostring(silentAimEnabled))
+end
+end)
+
+-- RenderStepped Loop
+game:GetService("RunService").RenderStepped:Connect(function()
+    if silentAimEnabled then
+        -- Logic to find closest player and set Camera.CFrame
+        -- ...
     end
 end)
