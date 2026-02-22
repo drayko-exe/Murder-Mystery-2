@@ -1,0 +1,64 @@
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local xrayOriginals = {} -- Tabela para guardar a transparência original dos objetos
+
+---------------------------------------------------------
+-- FUNÇÃO 1: INFINITE JUMP (PULO INFINITO)
+---------------------------------------------------------
+UserInputService.JumpRequest:Connect(function()
+    local character = player.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    
+    if humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+---------------------------------------------------------
+-- FUNÇÃO 2: TELEPORTE E PARAR ANIMAÇÃO (TECLA Y)
+---------------------------------------------------------
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    -- Teleporte e parar animação (Y)
+    if input.KeyCode == Enum.KeyCode.Y then
+        local character = player.Character
+        if not character then return end
+        
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        local root = character:FindFirstChild("HumanoidRootPart")
+        
+        if humanoid and root then
+            for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
+                track:Stop()
+            end
+            
+            local distancia = 7
+            root.CFrame = root.CFrame * CFrame.new(0, 0, distancia)
+        end
+
+    ---------------------------------------------------------
+    -- FUNÇÃO 3: X-RAY (K PARA ATIVAR, J PARA DESATIVAR)
+    ---------------------------------------------------------
+    elseif input.KeyCode == Enum.KeyCode.K then -- ATIVAR X-RAY
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and not obj:IsDescendantOf(player.Character) then
+                -- Salva a transparência original se ainda não salvou
+                if not xrayOriginals[obj] then
+                    xrayOriginals[obj] = obj.Transparency
+                end
+                obj.Transparency = 0.5 -- Define a transparência do X-Ray
+            end
+        end
+
+    elseif input.KeyCode == Enum.KeyCode.J then -- DESATIVAR X-RAY
+        for obj, originalValue in pairs(xrayOriginals) do
+            if obj and obj.Parent then
+                obj.Transparency = originalValue
+            end
+        end
+        xrayOriginals = {} -- Limpa a tabela para liberar memória
+    end
+end)
