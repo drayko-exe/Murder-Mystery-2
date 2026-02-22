@@ -15,7 +15,7 @@ local lastShotTime = 0
 local fireRate = 0.5 
 
 ---------------------------------------------------------
--- 1. FUNÇÃO ADMIN PANEL (B) - VERDE PARA INOCENTES
+-- 1. HIGHLIGHT EM ASSASINOS, XERIFES E INOCENTES
 ---------------------------------------------------------
 local function toggleAdminRoles()
     adminEnabled = not adminEnabled
